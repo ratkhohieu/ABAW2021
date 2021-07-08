@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="WebServers">
+    <option name="servers">
+      <webServer id="cddaffba-2c7d-4138-90a9-bc2672d7596b" name="gslee">
+        <fileTransfer rootFolder="/mnt/DATA1/hung/ABAW/" accessType="SFTP" host="168.131.152.126" port="6996" sshConfigId="827b0f53-d928-4a1b-9851-d2dcfeacc291" sshConfig="gslee@168.131.152.126:6996 password">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" passiveMode="true" shareSSLContext="true" />
+          </advancedOptions>
+        </fileTransfer>
+      </webServer>
+    </option>
+  </component>
+</project>
