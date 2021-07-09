@@ -87,35 +87,35 @@ class Mlp_ex_au(nn.Module):
         out_au = self.fc_au(out_b)
         return out_ex, out_au
 
-
-class Multitask_ex(nn.Module):
-    def __init__(self, num_classes_ex):
-        super(Multitask_ex, self).__init__()
-        self.backbone = prepare_model.prepare_model_relation()
-        self.backbone.fc = nn.Identity()
-        self.fc1 = nn.Linear(in_features=2048, out_features=512)
-        self.fc2 = nn.Linear(in_features=512, out_features=num_classes_ex)
-
-    def forward(self, x):
-        out_b = self.backbone(x)
-        out_b = self.fc1(out_b)
-        out_ex = self.fc2(out_b)
-        return out_ex
-
-
-class Multitask_au(nn.Module):
-    def __init__(self, num_classes_au, share_fc1):
-        super(Multitask_au, self).__init__()
-        self.backbone = prepare_model.prepare_model_relation()
-        self.backbone.fc = nn.Identity()
-        self.fc1 = share_fc1
-        self.fc2 = nn.Linear(in_features=512, out_features=num_classes_au)
-
-    def forward(self, x):
-        out_b = self.backbone(x)
-        out_b = self.fc1(out_b)
-        out_au = self.fc2(out_b)
-        return out_au
+#
+# class Multitask_ex(nn.Module):
+#     def __init__(self, num_classes_ex):
+#         super(Multitask_ex, self).__init__()
+#         self.backbone = prepare_model.prepare_model_relation()
+#         self.backbone.fc = nn.Identity()
+#         self.fc1 = nn.Linear(in_features=2048, out_features=512)
+#         self.fc2 = nn.Linear(in_features=512, out_features=num_classes_ex)
+#
+#     def forward(self, x):
+#         out_b = self.backbone(x)
+#         out_b = self.fc1(out_b)
+#         out_ex = self.fc2(out_b)
+#         return out_ex
+#
+#
+# class Multitask_au(nn.Module):
+#     def __init__(self, num_classes_au, share_fc1):
+#         super(Multitask_au, self).__init__()
+#         self.backbone = prepare_model.prepare_model_relation()
+#         self.backbone.fc = nn.Identity()
+#         self.fc1 = share_fc1
+#         self.fc2 = nn.Linear(in_features=512, out_features=num_classes_au)
+#
+#     def forward(self, x):
+#         out_b = self.backbone(x)
+#         out_b = self.fc1(out_b)
+#         out_au = self.fc2(out_b)
+#         return out_au
 
 
 class Resnet_Multitask(nn.Module):
@@ -143,3 +143,48 @@ class Resnet_Multitask(nn.Module):
         out_au = self.fc_au(x)
 
         return out_expr, out_au
+
+
+
+class Multitask_ex(nn.Module):
+    def __init__(self):
+        super(Multitask_ex, self).__init__()
+        self.backbone = resnet50(pretrained=False)
+        pretrained_vggface2 = './weight/resnet50_ft_weight.pkl'
+        with open(pretrained_vggface2,'rb') as f:
+            pretrained_data = pickle.load(f)
+        for k,v in pretrained_data.items():
+            pretrained_data[k] = torch.tensor(v)
+        self.backbone.fc = nn.Identity()
+
+        self.fc_expr = nn.Sequential(
+            nn.Linear(in_features=2048, out_features=512),
+            nn.ReLU(inplace=True),
+            nn.Dropout(0.5),
+            nn.Linear(512,7)
+        )
+
+    def forward(self, x):
+        x = self.backbone(x)
+        out_expr = self.fc_expr(x)
+
+        return out_expr
+
+
+class Multitask_au(nn.Module):
+    def __init__(self, share_bb):
+        super(Multitask_au, self).__init__()
+        self.backbone = share_bb
+        self.backbone.fc = nn.Identity()
+
+        self.fc_au = nn.Sequential(
+            nn.Linear(in_features=2048, out_features=512),
+            nn.ReLU(inplace=True),
+            nn.Dropout(0.5),
+            nn.Linear(512,12)
+        )
+    def forward(self, x):
+        x = self.backbone(x)
+        out_au = self.fc_au(x)
+
+        return out_au

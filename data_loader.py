@@ -6,7 +6,7 @@ from torchvision import transforms
 from utils import *
 
 train_transform = transforms.Compose([transforms.ToPILImage(),
-                                      transforms.Resize(size=(224, 224)),
+                                      transforms.Resize(size=(112, 112)),
                                       transforms.RandomHorizontalFlip(),
                                       # transforms.ColorJitter(brightness=0.4, contrast=0.4, saturation=0.4),
                                       transforms.ToTensor(),
@@ -15,7 +15,7 @@ train_transform = transforms.Compose([transforms.ToPILImage(),
                                       ])
 
 test_transform = transforms.Compose([transforms.ToPILImage(),
-                                     transforms.Resize(size=(224, 224)),
+                                     transforms.Resize(size=(112, 112)),
                                      transforms.ToTensor(),
                                      transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))
                                      ])

@@ -11,7 +11,7 @@ warnings.filterwarnings("ignore")
 
 parser = argparse.ArgumentParser(description='MuSE Training')
 
-parser.add_argument('-b', '--batch_size', default=256, type=int, help='batch size')
+parser.add_argument('-b', '--batch_size', default=512, type=int, help='batch size')
 parser.add_argument('-p', '--partition', default='ex', type=str, help='partition')
 
 args = parser.parse_args()
@@ -23,7 +23,10 @@ def main():
     # seed_everything()
     df_video = pd.read_csv('./weight/ex_test_len.csv')
     # list_csv = glob.glob('../data/labels_save/expression/Test_Set/*')
-    model = torch.load('./weight/multitask_best_ex_2.pth', map_location={'cuda:1':'cuda:0'})
+    # model = torch.load('./weight/multitask_best_ex_3.pth')
+    model = Resnet_Multitask()
+    model.load_state_dict(torch.load('../model_2anno_trainall_withFocal_BOTH_epoch_4.pth'))
+    model.to(device)
 
     for ind, name_video in tqdm(enumerate(df_video['name_videos']), total=len(df_video)):
         df = pd.read_csv('../data/labels_save/expression/Test_Set/' + name_video + '.csv', index_col=0)
@@ -76,7 +79,9 @@ def main1():
     # seed_everything()
     df_video = pd.read_csv('./weight/au_test_len.csv')
     # list_csv = glob.glob('../data/labels_save/expression/Test_Set/*')
-    model = torch.load('./weight/multitask_best_au_2.pth')
+    # model = torch.load('./weight/multitask_best_au_3.pth')
+    model = Resnet_Multitask()
+    model.load_state_dict(torch.load('../model_2anno_trainall_withoutFocal_AU_epoch_4.pth'))
     model.to(device)
     for ind, name_video in tqdm(enumerate(df_video['name_videos']), total=len(df_video)):
         df = pd.read_csv('../data/labels_save/action_unit/Test_Set/' + name_video + '.csv', index_col=0)
@@ -117,7 +122,7 @@ def main1():
         file = open(path + name_video + '.txt', "a")
         file.write("AU1,AU2,AU4,AU6,AU7,AU10,AU12,AU15,AU23,AU24,AU25,AU26 \n")
         file.close()
-        # import pdb; pdb.set_trace()
+
         df2 = df2.drop(columns=['image_id', 'result'])
         df2.to_csv(path + name_video + '.txt', header=None, index=None, sep=',', mode='a')
 

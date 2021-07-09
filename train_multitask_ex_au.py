@@ -14,7 +14,7 @@ warnings.filterwarnings("ignore")
 
 parser = argparse.ArgumentParser(description='MuSE Training')
 parser.add_argument('--lr', default=1e-3, type=float, help='learning rate')
-parser.add_argument('--batch_size', default=128, type=int, help='batch size')
+parser.add_argument('--batch_size', default=256, type=int, help='batch size')
 parser.add_argument('--num_epochs', default=10, type=int, help='number epochs')
 parser.add_argument('--weight_decay', type=float, default=5e-4)
 
@@ -170,34 +170,34 @@ def main():
                               Batch=f'{batch_idx + 1:03d}/{len(train_loader_ex):03d}',
                               Lr=optimizer.param_groups[0]['lr'])
 
-            # model.eval()
-            # with torch.no_grad():
-            #     cat_preds = []
-            #     cat_labels = []
-            #     for batch_idx, samples in tqdm(enumerate(valid_loader_ex), total=len(valid_loader_ex),
-            #                                    desc='Valid_mode'):
-            #         images = samples['images'].to(device).float()
-            #         labels_cat = samples['labels'].to(device).long()
-            #
-            #         pred_cat, _ = model(images)
-            #         pred_cat = F.softmax(pred_cat)
-            #         pred_cat = torch.argmax(pred_cat, dim=1)
-            #
-            #         cat_preds.append(pred_cat.detach().cpu().numpy())
-            #         cat_labels.append(labels_cat.detach().cpu().numpy())
-            #
-            #     cat_preds = np.concatenate(cat_preds, axis=0)
-            #     cat_labels = np.concatenate(cat_labels, axis=0)
-            #
-            #     f1, acc, total = EXPR_metric(cat_preds, cat_labels)
-            #     print(f'f1_ex = {f1} \n'
-            #           f'acc_ex = {acc} \n'
-            #           f'total_ex = {total} \n')
-            #
-            #     if best_scores_ex < total:
-            #         best_scores_ex = total
-            #         os.makedirs('./weight', exist_ok=True)
-            #         torch.save(model, f'./weight/multitask_best_ex_2.pth')
+            model.eval()
+            with torch.no_grad():
+                cat_preds = []
+                cat_labels = []
+                for batch_idx, samples in tqdm(enumerate(valid_loader_ex), total=len(valid_loader_ex),
+                                               desc='Valid_mode'):
+                    images = samples['images'].to(device).float()
+                    labels_cat = samples['labels'].to(device).long()
+
+                    pred_cat, _ = model(images)
+                    pred_cat = F.softmax(pred_cat)
+                    pred_cat = torch.argmax(pred_cat, dim=1)
+
+                    cat_preds.append(pred_cat.detach().cpu().numpy())
+                    cat_labels.append(labels_cat.detach().cpu().numpy())
+
+                cat_preds = np.concatenate(cat_preds, axis=0)
+                cat_labels = np.concatenate(cat_labels, axis=0)
+
+                f1, acc, total = EXPR_metric(cat_preds, cat_labels)
+                print(f'f1_ex = {f1} \n'
+                      f'acc_ex = {acc} \n'
+                      f'total_ex = {total} \n')
+
+                if best_scores_ex < total:
+                    best_scores_ex = total
+                    os.makedirs('./weight', exist_ok=True)
+                    # torch.save(model, f'./weight/multitask_best_ex_2.pth')
 
             model.train()
             for name, p in model.named_parameters():
@@ -223,33 +223,33 @@ def main():
                               Batch=f'{batch_idx + 1:03d}/{len(train_loader_au):03d}',
                               Lr=optimizer.param_groups[0]['lr'])
 
-            # model.eval()
-            # with torch.no_grad():
-            #     cat_preds = []
-            #     cat_labels = []
-            #     for batch_idx, samples in tqdm(enumerate(valid_loader_au), total=len(valid_loader_au),
-            #                                    desc='Valid_mode'):
-            #         images = samples['images'].to(device).float()
-            #         labels_cat = samples['labels'].to(device).float()
-            #
-            #         _, pred_cat = model(images)
-            #         pred_cat = F.sigmoid(pred_cat)
-            #
-            #         cat_preds.append(pred_cat.detach().cpu().numpy())
-            #         cat_labels.append(labels_cat.detach().cpu().numpy())
-            #
-            #     cat_preds = np.concatenate(cat_preds, axis=0)
-            #     cat_labels = np.concatenate(cat_labels, axis=0)
-            #     cat_preds = (cat_preds > 0.5).astype(int)
-            #     # import pdb; pdb.set_trace();
-            #     f1, acc, total = AU_metric(cat_preds, cat_labels)
-            #     print(f'f1_au = {f1} \n'
-            #           f'acc_au = {acc} \n'
-            #           f'total_au = {total} \n')
-            #     if best_scores_au < total:
-            #         best_scores_au = total
-            #         os.makedirs('./weight', exist_ok=True)
-            #         torch.save(model, f'./weight/multitask_best_au_3.pth')
+            model.eval()
+            with torch.no_grad():
+                cat_preds = []
+                cat_labels = []
+                for batch_idx, samples in tqdm(enumerate(valid_loader_au), total=len(valid_loader_au),
+                                               desc='Valid_mode'):
+                    images = samples['images'].to(device).float()
+                    labels_cat = samples['labels'].to(device).float()
+
+                    _, pred_cat = model(images)
+                    pred_cat = F.sigmoid(pred_cat)
+
+                    cat_preds.append(pred_cat.detach().cpu().numpy())
+                    cat_labels.append(labels_cat.detach().cpu().numpy())
+
+                cat_preds = np.concatenate(cat_preds, axis=0)
+                cat_labels = np.concatenate(cat_labels, axis=0)
+                cat_preds = (cat_preds > 0.5).astype(int)
+                # import pdb; pdb.set_trace();
+                f1, acc, total = AU_metric(cat_preds, cat_labels)
+                print(f'f1_au = {f1} \n'
+                      f'acc_au = {acc} \n'
+                      f'total_au = {total} \n')
+                if best_scores_au < total:
+                    best_scores_au = total
+                    os.makedirs('./weight', exist_ok=True)
+                    # torch.save(model, f'./weight/multitask_best_au_2.pth')
 
             model.train()
             for name, p in model.named_parameters():
@@ -273,35 +273,35 @@ def main():
                               Batch=f'{batch_idx + 1:03d}/{len(train_loader_all):03d}',
                               Lr=optimizer.param_groups[0]['lr'])
 
-            # model.eval()
-            # with torch.no_grad():
-            #     cat_preds = []
-            #     cat_labels = []
-            #     for batch_idx, samples in tqdm(enumerate(valid_loader_au), total=len(valid_loader_au),
-            #                                    desc='Valid_mode'):
-            #         images = samples['images'].to(device).float()
-            #         labels_cat = samples['labels'].to(device).float()
-            #
-            #         _, pred_cat = model(images)
-            #         pred_cat = F.sigmoid(pred_cat)
-            #
-            #         cat_preds.append(pred_cat.detach().cpu().numpy())
-            #         cat_labels.append(labels_cat.detach().cpu().numpy())
-            #
-            #     cat_preds = np.concatenate(cat_preds, axis=0)
-            #     cat_labels = np.concatenate(cat_labels, axis=0)
-            #     cat_preds = (cat_preds > 0.5).astype(int)
-            #     # import pdb; pdb.set_trace();
-            #     f1, acc, total = AU_metric(cat_preds, cat_labels)
-            #     print(f'f1_au = {f1} \n'
-            #           f'acc_au = {acc} \n'
-            #           f'total_au = {total} \n')
-            #     if best_scores_au < total:
-            #         best_scores_au = total
-            #         os.makedirs('./weight', exist_ok=True)
-            #         # torch.save(model, f'./weight/multitask_best_au_2.pth')
-            #
-            #     print(get_thresholds(cat_preds.transpose(), cat_labels.transpose()))
+            model.eval()
+            with torch.no_grad():
+                cat_preds = []
+                cat_labels = []
+                for batch_idx, samples in tqdm(enumerate(valid_loader_au), total=len(valid_loader_au),
+                                               desc='Valid_mode'):
+                    images = samples['images'].to(device).float()
+                    labels_cat = samples['labels'].to(device).float()
+
+                    _, pred_cat = model(images)
+                    pred_cat = F.sigmoid(pred_cat)
+
+                    cat_preds.append(pred_cat.detach().cpu().numpy())
+                    cat_labels.append(labels_cat.detach().cpu().numpy())
+
+                cat_preds = np.concatenate(cat_preds, axis=0)
+                cat_labels = np.concatenate(cat_labels, axis=0)
+                cat_preds = (cat_preds > 0.5).astype(int)
+                # import pdb; pdb.set_trace();
+                f1, acc, total = AU_metric(cat_preds, cat_labels)
+                print(f'f1_au = {f1} \n'
+                      f'acc_au = {acc} \n'
+                      f'total_au = {total} \n')
+                if best_scores_au < total:
+                    best_scores_au = total
+                    os.makedirs('./weight', exist_ok=True)
+                    # torch.save(model, f'./weight/multitask_best_au_2.pth')
+
+                print(get_thresholds(cat_preds.transpose(), cat_labels.transpose()))
 
             model.eval()
             with torch.no_grad():
@@ -330,7 +330,7 @@ def main():
                 if best_scores_ex < total:
                     best_scores_ex = total
                     os.makedirs('./weight', exist_ok=True)
-                    torch.save(model, f'./weight/multitask_best_ex_3.pth')
+                    # torch.save(model, f'./weight/multitask_best_ex_2.pth')
 
 
 if __name__ == '__main__':

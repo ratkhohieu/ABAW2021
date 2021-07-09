@@ -26,29 +26,29 @@ device = "cuda:0" if torch.cuda.is_available() else 'cpu'
 def main():
     seed_everything()
 
-    train_dataset_all = Aff2_Dataset_static_multitask(df=pd.read_csv('../data/labels_save/multitask/inner_ex_au.csv'),
-                                                      transform=train_transform, type_partition='2type')
-    train_loader_all = DataLoader(dataset=train_dataset_all,
-                                  batch_size=args.batch_size,
-                                  num_workers=4,
-                                  shuffle=True,
-                                  drop_last=False)
-
-    train_dataset_ex = Aff2_Dataset_static_shuffle(root='../data/labels_save/expression/Train_Set/',
-                                                   transform=train_transform, type_partition='ex')
-    train_loader_ex = DataLoader(dataset=train_dataset_ex,
-                                 batch_size=512,
-                                 num_workers=4,
-                                 shuffle=True,
-                                 drop_last=False)
-
-    train_dataset_au = Aff2_Dataset_static_shuffle(root='../data/labels_save/action_unit/Train_Set/',
-                                                   transform=train_transform, type_partition='au')
-    train_loader_au = DataLoader(dataset=train_dataset_au,
-                                 batch_size=512,
-                                 num_workers=4,
-                                 shuffle=True,
-                                 drop_last=False)
+    # train_dataset_all = Aff2_Dataset_static_multitask(df=pd.read_csv('../data/labels_save/multitask/inner_ex_au.csv'),
+    #                                                   transform=train_transform, type_partition='2type')
+    # train_loader_all = DataLoader(dataset=train_dataset_all,
+    #                               batch_size=args.batch_size,
+    #                               num_workers=4,
+    #                               shuffle=True,
+    #                               drop_last=False)
+    #
+    # train_dataset_ex = Aff2_Dataset_static_shuffle(root='../data/labels_save/expression/Train_Set/',
+    #                                                transform=train_transform, type_partition='ex')
+    # train_loader_ex = DataLoader(dataset=train_dataset_ex,
+    #                              batch_size=512,
+    #                              num_workers=4,
+    #                              shuffle=True,
+    #                              drop_last=False)
+    #
+    # train_dataset_au = Aff2_Dataset_static_shuffle(root='../data/labels_save/action_unit/Train_Set/',
+    #                                                transform=train_transform, type_partition='au')
+    # train_loader_au = DataLoader(dataset=train_dataset_au,
+    #                              batch_size=512,
+    #                              num_workers=4,
+    #                              shuffle=True,
+    #                              drop_last=False)
 
     # import pdb; pdb.set_trace()
     valid_dataset_au = Aff2_Dataset_static_shuffle(root='../data/labels_save/action_unit/Validation_Set/',
@@ -68,13 +68,18 @@ def main():
                                  shuffle=False,
                                  drop_last=False)
 
-    modelex = Multitask_ex(num_classes_ex=7)
-    modelau = Multitask_au(num_classes_au=12, share_fc1=modelex.fc1)
+    modelex = Multitask_ex()
+    modelau = Multitask_au(share_bb=modelex.backbone)
 
-    if torch.cuda.device_count() > 1:
-        print("Let's use", torch.cuda.device_count(), "GPUs!")
-        modelex = nn.DataParallel(modelex)
-        modelau = nn.DataParallel(modelau)
+
+
+    modelau.load_state_dict(torch.load('../model_sharebb_bestau_0.6550978479977349.pth'))
+    # modelex.load_state_dict(torch.load('../model_sharebb_bestexpr_0.7126110389367583.pth'))
+
+    # if torch.cuda.device_count() > 1:
+    #     print("Let's use", torch.cuda.device_count(), "GPUs!")
+    #     modelex = nn.DataParallel(modelex)
+    #     modelau = nn.DataParallel(modelau)
 
     modelex.to(device)
     modelau.to(device)
@@ -103,59 +108,59 @@ def main():
             modelex.train()
             modelau.train()
 
-            for batch_idx, samples in tqdm(enumerate(train_loader_ex), total=len(train_loader_ex)):
-                images = samples['images'].to(device).float()
-                labels_cat = samples['labels'].to(device).long()
-                # import pdb; pdb.set_trace()
-                pred_cat = modelex(images)
-
-                loss = criterion1(pred_cat, labels_cat)
-                cost_list += loss.item()
-                optimizerex.zero_grad()
-
-                loss.backward()
-                optimizerex.step()
-
-                t.set_postfix(Loss=f'{cost_list / (batch_idx + 1):04f}',
-                              Batch=f'{batch_idx + 1:03d}/{len(train_loader_ex):03d}',
-                              Lr=optimizerex.param_groups[0]['lr'])
-
-            for batch_idx, samples in tqdm(enumerate(train_loader_au), total=len(train_loader_au)):
-                images = samples['images'].to(device).float()
-                labels_cat = samples['labels'].to(device).float()
-                # import pdb; pdb.set_trace()
-                pred_cat = modelau(images)
-
-                loss = criterion2(pred_cat, labels_cat)
-                cost_list += loss.item()
-                optimizerau.zero_grad()
-
-                loss.backward()
-                optimizerau.step()
-
-                t.set_postfix(Loss=f'{cost_list / (batch_idx + 1):04f}',
-                              Batch=f'{batch_idx + 1:03d}/{len(train_loader_au):03d}',
-                              Lr=optimizerau.param_groups[0]['lr'])
-
-            for batch_idx, samples in tqdm(enumerate(train_loader_all), total=len(train_loader_all)):
-                images = samples['images'].to(device).float()
-                labels_ex = samples['labels_ex'].to(device).long()
-                labels_au = samples['labels_au'].to(device).float()
-                # import pdb; pdb.set_trace()
-                pred_ex = modelex(images)
-                pred_au = modelau(images)
-
-                loss = criterion1(pred_ex, labels_ex) + criterion2(pred_au, labels_au)
-                cost_list += loss.item()
-                optimizerex.zero_grad()
-                optimizerau.zero_grad()
-
-                loss.backward()
-                optimizerex.step()
-                optimizerau.step()
-
-                t.set_postfix(Loss=f'{cost_list / (batch_idx + 1):04f}',
-                              Batch=f'{batch_idx + 1:03d}/{len(train_loader_all):03d}')
+            # for batch_idx, samples in tqdm(enumerate(train_loader_ex), total=len(train_loader_ex)):
+            #     images = samples['images'].to(device).float()
+            #     labels_cat = samples['labels'].to(device).long()
+            #     # import pdb; pdb.set_trace()
+            #     pred_cat = modelex(images)
+            #
+            #     loss = criterion1(pred_cat, labels_cat)
+            #     cost_list += loss.item()
+            #     optimizerex.zero_grad()
+            #
+            #     loss.backward()
+            #     optimizerex.step()
+            #
+            #     t.set_postfix(Loss=f'{cost_list / (batch_idx + 1):04f}',
+            #                   Batch=f'{batch_idx + 1:03d}/{len(train_loader_ex):03d}',
+            #                   Lr=optimizerex.param_groups[0]['lr'])
+            #
+            # for batch_idx, samples in tqdm(enumerate(train_loader_au), total=len(train_loader_au)):
+            #     images = samples['images'].to(device).float()
+            #     labels_cat = samples['labels'].to(device).float()
+            #     # import pdb; pdb.set_trace()
+            #     pred_cat = modelau(images)
+            #
+            #     loss = criterion2(pred_cat, labels_cat)
+            #     cost_list += loss.item()
+            #     optimizerau.zero_grad()
+            #
+            #     loss.backward()
+            #     optimizerau.step()
+            #
+            #     t.set_postfix(Loss=f'{cost_list / (batch_idx + 1):04f}',
+            #                   Batch=f'{batch_idx + 1:03d}/{len(train_loader_au):03d}',
+            #                   Lr=optimizerau.param_groups[0]['lr'])
+            #
+            # for batch_idx, samples in tqdm(enumerate(train_loader_all), total=len(train_loader_all)):
+            #     images = samples['images'].to(device).float()
+            #     labels_ex = samples['labels_ex'].to(device).long()
+            #     labels_au = samples['labels_au'].to(device).float()
+            #     # import pdb; pdb.set_trace()
+            #     pred_ex = modelex(images)
+            #     pred_au = modelau(images)
+            #
+            #     loss = criterion1(pred_ex, labels_ex) + criterion2(pred_au, labels_au)
+            #     cost_list += loss.item()
+            #     optimizerex.zero_grad()
+            #     optimizerau.zero_grad()
+            #
+            #     loss.backward()
+            #     optimizerex.step()
+            #     optimizerau.step()
+            #
+            #     t.set_postfix(Loss=f'{cost_list / (batch_idx + 1):04f}',
+            #                   Batch=f'{batch_idx + 1:03d}/{len(train_loader_all):03d}')
 
             modelau.eval()
             modelex.eval()
